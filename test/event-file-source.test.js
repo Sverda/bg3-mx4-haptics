@@ -11,6 +11,7 @@ test("uses an existing snapshot as a baseline and emits later changes", async ()
   const directory = await mkdtemp(path.join(os.tmpdir(), "bg3-haptics-"));
   const eventPath = path.join(directory, "events.json");
   const received = [];
+  const baselines = [];
 
   try {
     await writeFile(eventPath, JSON.stringify({
@@ -20,11 +21,14 @@ test("uses an existing snapshot as a baseline and emits later changes", async ()
       events: [{ id: "one:1", type: "turn.started" }]
     }));
 
-    const source = new EventFileSource(eventPath, (snapshot) => received.push(snapshot));
+    const source = new EventFileSource(eventPath, (snapshot) => received.push(snapshot), {
+      onBaseline: (snapshot) => baselines.push(snapshot)
+    });
     source.start();
     await wait(70);
 
     assert.equal(received.length, 0);
+    assert.deepEqual(baselines.map((snapshot) => snapshot.sequence), [1]);
 
     await writeFile(eventPath, JSON.stringify({
       version: 1,

@@ -7,6 +7,7 @@ Prototype haptic feedback for Baldur's Gate 3 using the Logitech MX Master 4 and
 - The bridge connects to the Haptic Web Plugin over its low-latency WebSocket API.
 - A real `subtle_collision` waveform has been sent successfully from this repository.
 - The BG3 Script Extender mod emits combat, roll, spell and turn events.
+- The client-side mod emits subtle feedback for UI focus, activation and back actions.
 - The event bridge deduplicates rolling snapshots, reconnects automatically and coalesces overlapping feedback.
 - The complete BG3 -> Script Extender -> Node bridge -> MX Master 4 path has been verified in game.
 - Damage uses three strength tiers, with received damage intentionally feeling stronger sooner.
@@ -19,7 +20,7 @@ Prototype haptic feedback for Baldur's Gate 3 using the Logitech MX Master 4 and
 - Logitech MX Master 4
 - Logi Options+ with Haptic Web Plugin enabled
 - Node.js 22 or newer
-- Baldur's Gate 3 Script Extender v31 or newer for gameplay events
+- Baldur's Gate 3 Script Extender v31 or newer for gameplay and UI events
 
 The bridge deliberately uses Node's built-in WebSocket implementation. On the development machine, browser and Node TLS clients connect successfully, while Windows Schannel clients currently fail before the TLS handshake.
 
@@ -47,6 +48,13 @@ The path can be overridden:
 
 ```powershell
 npm start -- --events samples/live-events.json
+```
+
+The bridge also watches `ui-events.json` beside the gameplay event file. Its path can
+be overridden independently:
+
+```powershell
+npm start -- --ui-events samples/ui-events.json
 ```
 
 In another terminal, emit a synthetic event:

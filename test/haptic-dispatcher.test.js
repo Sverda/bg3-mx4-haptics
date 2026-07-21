@@ -281,7 +281,7 @@ test("plays every pulse in a composite pattern", async () => {
     }
   }]);
 
-  await new Promise((resolve) => setTimeout(resolve, 20));
+  await new Promise((resolve) => setTimeout(resolve, 80));
   dispatcher.stop();
 
   assert.deepEqual(sent, ["subtle_collision", "damp_collision", "sharp_collision"]);

@@ -13,6 +13,8 @@ function parseArguments(arguments_) {
       options.waveform = arguments_[++index];
     } else if (argument === "--events") {
       options.eventsPath = arguments_[++index];
+    } else if (argument === "--ui-events") {
+      options.uiEventsPath = arguments_[++index];
     } else if (argument === "--url") {
       options.url = arguments_[++index];
     } else if (argument === "--help" || argument === "-h") {
@@ -47,6 +49,7 @@ function printHelp() {
 Usage:
   npm start                         Watch the default BG3SE event file
   npm start -- --events <path>      Watch a custom event file
+  npm start -- --ui-events <path>   Watch a custom client UI event file
   npm start -- --waveform <name>    Play one waveform and exit
 
 Available waveforms:
@@ -75,6 +78,9 @@ async function main() {
   }
 
   const eventsPath = options.eventsPath ?? process.env.BG3_HAPTICS_EVENT_FILE ?? defaultEventsPath();
+  const uiEventsPath = options.uiEventsPath
+    ?? process.env.BG3_HAPTICS_UI_EVENT_FILE
+    ?? path.join(path.dirname(eventsPath), "ui-events.json");
   const router = new EventRouter();
   const dispatcher = new HapticDispatcher(client, {
     onSend: (candidate) => {
@@ -84,16 +90,28 @@ async function main() {
       console.log(`Event ${candidate.event.type} -> ${feedback}`);
     }
   });
-  const source = new EventFileSource(eventsPath, (snapshot) => {
+  const onSnapshot = (snapshot) => {
     const candidates = router.routeSnapshot(snapshot);
     dispatcher.dispatch(candidates);
-  });
+  };
+  const eventPaths = [...new Set([eventsPath, uiEventsPath])];
+  const sources = eventPaths.map((eventPath) => new EventFileSource(eventPath, onSnapshot, {
+    onBaseline: (snapshot) => {
+      router.routeSnapshot(snapshot);
+    }
+  }));
 
-  console.log(`Watching BG3 haptic events at: ${eventsPath}`);
-  source.start();
+  for (const eventPath of eventPaths) {
+    console.log(`Watching BG3 haptic events at: ${eventPath}`);
+  }
+  for (const source of sources) {
+    source.start();
+  }
 
   const shutdown = () => {
-    source.stop();
+    for (const source of sources) {
+      source.stop();
+    }
     dispatcher.stop();
     client.stop();
     process.exit(0);

@@ -313,6 +313,14 @@ export class HapticDispatcher {
 
     candidate.pattern.pulses.forEach((pulse, index) => {
       elapsed += pulse.delayMs;
+      if (elapsed === 0) {
+        this.#sendWaveform(pulse.waveform, candidate, index === 0);
+        if (index === candidate.pattern.pulses.length - 1) {
+          this.#activePattern = null;
+        }
+        return;
+      }
+
       const timer = setTimeout(() => {
         if (this.#activePattern !== pattern) {
           return;

@@ -27,3 +27,24 @@ test("routes the sample area spell through the complete event pipeline", async (
   assert.equal(areaResult?.pattern.pulses.at(-1).waveform, "firework");
   assert.ok(sent.length >= 2);
 });
+
+test("routes a client UI activation through the complete event pipeline", async () => {
+  const sent = [];
+  const client = { send: (waveform) => sent.push(waveform) };
+  const dispatcher = new HapticDispatcher(client, {
+    minimumIntervalMs: 1,
+    aggregationWindowMs: 1
+  });
+  const snapshot = {
+    version: 1,
+    session: "ui-demo",
+    sequence: 1,
+    events: [{ id: "ui-demo:1", type: "ui.activate", input: "mouse" }]
+  };
+
+  dispatcher.dispatch(new EventRouter().routeSnapshot(snapshot));
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  dispatcher.stop();
+
+  assert.deepEqual(sent, ["damp_state_change"]);
+});

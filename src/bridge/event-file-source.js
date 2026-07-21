@@ -5,6 +5,7 @@ export class EventFileSource {
   #path;
   #logger;
   #onSnapshot;
+  #onBaseline;
   #lastSequence = -1;
   #lastSession = null;
   #reading = false;
@@ -14,9 +15,10 @@ export class EventFileSource {
   #directoryWatcher = null;
   #stopped = true;
 
-  constructor(path, onSnapshot, { logger = console } = {}) {
+  constructor(path, onSnapshot, { logger = console, onBaseline = () => {} } = {}) {
     this.#path = path;
     this.#onSnapshot = onSnapshot;
+    this.#onBaseline = onBaseline;
     this.#logger = logger;
   }
 
@@ -74,7 +76,9 @@ export class EventFileSource {
 
         this.#lastSession = session;
         this.#lastSequence = snapshot.sequence;
-        if (!suppressSnapshot) {
+        if (suppressSnapshot) {
+          this.#onBaseline(snapshot);
+        } else {
           this.#onSnapshot(snapshot);
         }
       } catch {

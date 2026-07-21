@@ -17,6 +17,24 @@ test("routes known events by priority and ignores unknown events", () => {
   assert.deepEqual(result.map((item) => item.waveform), ["firework", "knock"]);
 });
 
+test("routes client UI feedback with activation above back and focus", () => {
+  const router = new EventRouter();
+  const result = router.routeSnapshot(snapshot(1, [
+    { id: "focus", type: "ui.focus" },
+    { id: "back", type: "ui.back" },
+    { id: "activate", type: "ui.activate" }
+  ]));
+
+  assert.deepEqual(
+    result.map((item) => [item.event.type, item.waveform, item.priority]),
+    [
+      ["ui.activate", "damp_state_change", 15],
+      ["ui.back", "subtle_collision", 10],
+      ["ui.focus", "subtle_collision", 5]
+    ]
+  );
+});
+
 test("does not route the same event twice from the rolling snapshot", () => {
   const router = new EventRouter();
   const event = { id: "session:1", type: "roll.success" };

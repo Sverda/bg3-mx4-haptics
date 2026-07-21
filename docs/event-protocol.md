@@ -6,6 +6,14 @@ The BG3 Script Extender mod and the bridge communicate through a small rolling J
 %LOCALAPPDATA%\Larian Studios\Baldur's Gate 3\Script Extender\BG3Haptics\events.json
 ```
 
+Client-side UI events use a second rolling snapshot in the same directory:
+
+```text
+%LOCALAPPDATA%\Larian Studios\Baldur's Gate 3\Script Extender\BG3Haptics\ui-events.json
+```
+
+The UI snapshot retains its latest 16 events and has an independent client session ID.
+
 Example:
 
 ```json
@@ -28,6 +36,7 @@ Example:
 - `sequence` increases for every emitted event within a session.
 - `events` retains the latest 64 events so dense multi-target actions survive a short read delay.
 - `id` is globally unique for the game session and is used for deduplication.
+- Existing snapshots seed deduplication when the bridge starts and are not replayed.
 - Extra event-specific fields are allowed and ignored by older bridge versions.
 - Positive `storyActionId` values correlate spell lifecycle and combat-result events.
 - `direction` is `dealt` or `received` for combat feedback.
@@ -51,8 +60,16 @@ Example:
 | `spell.offensive.completed` | harmful spell `CastedSpell` | `ringing` fallback or area pattern |
 | `spell.offensive.failed` | harmful spell `CastSpellFailed` | Silent cancellation event |
 | `turn.started` | `TurnStarted` | `knock` |
+| `ui.focus` | Noesis `GotKeyboardFocus` | `subtle_collision` |
+| `ui.activate` | Noesis mouse or keyboard/controller activation | `damp_state_change` |
+| `ui.back` | Noesis keyboard/controller cancel | `subtle_collision` |
 
 `action.confirmed` remains understood by the bridge for compatibility with older mod snapshots, but the current mod no longer emits it. Starting an action alone does not produce feedback.
+
+UI events are emitted locally by `BootstrapClient.lua`. Focus, activation and back
+events have separate 70 ms, 50 ms and 100 ms cooldowns so rapid navigation remains
+responsive without flooding the mouse. Mouse activation is limited to interactive
+Noesis controls such as buttons, toggles, sliders, tabs and list items.
 
 The Haptic Web Plugin exposes discrete waveform presets rather than an arbitrary amplitude value. Damage strength is therefore represented with three collision waveforms:
 

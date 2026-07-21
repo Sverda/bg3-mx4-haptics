@@ -13,7 +13,10 @@ const DEFAULT_MAPPINGS = Object.freeze({
   "spell.offensive.started": { priority: 0, silent: true },
   "spell.offensive.completed": { waveform: "ringing", priority: 30 },
   "spell.offensive.failed": { priority: 0, silent: true },
-  "turn.started": { waveform: "knock", priority: 40 }
+  "turn.started": { waveform: "knock", priority: 40 },
+  "ui.activate": { waveform: "damp_state_change", priority: 15 },
+  "ui.back": { waveform: "subtle_collision", priority: 10 },
+  "ui.focus": { waveform: "subtle_collision", priority: 5 }
 });
 
 const OUTCOME_TYPES = new Set([

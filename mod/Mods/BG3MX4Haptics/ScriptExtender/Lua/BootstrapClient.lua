@@ -6,8 +6,10 @@ local RecentEvents = {}
 local Cooldowns = {}
 local HookedRoot = nil
 local LastFocusedElement = nil
+local LastHoveredElement = nil
 
 local CooldownMs = {
+  ["ui.hover"] = 60,
   ["ui.focus"] = 70,
   ["ui.activate"] = 50,
   ["ui.back"] = 100
@@ -44,6 +46,7 @@ local function ResetStream()
   RecentEvents = {}
   Cooldowns = {}
   LastFocusedElement = nil
+  LastHoveredElement = nil
   WriteSnapshot()
 end
 
@@ -128,6 +131,10 @@ local function FindInteractiveControl(source, root)
       end
     end
 
+    if ReadProperty(current, "Focusable") == true then
+      return current, className
+    end
+
     current = VisualParent(current)
   end
 
@@ -177,12 +184,22 @@ local function AttachToRoot()
     return true
   end
 
-  local subscribed = Subscribe(root, "PreviewMouseLeftButtonDown", function(target, arguments)
+  local subscribed = Subscribe(root, "PreviewMouseMove", function(target, arguments)
+    local control, className = FindInteractiveControl(EventSource(arguments, target), root)
+    if control ~= LastHoveredElement then
+      LastHoveredElement = control
+      if control ~= nil then
+        EmitThrottled("ui.hover", { input = "mouse", controlType = className })
+      end
+    end
+  end)
+
+  subscribed = Subscribe(root, "PreviewMouseLeftButtonDown", function(target, arguments)
     local _, className = FindInteractiveControl(EventSource(arguments, target), root)
     if className then
       EmitThrottled("ui.activate", { input = "mouse", controlType = className })
     end
-  end)
+  end) and subscribed
 
   subscribed = Subscribe(root, "GotKeyboardFocus", function(target, arguments)
     local source = EventSource(arguments, target)

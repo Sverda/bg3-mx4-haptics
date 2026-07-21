@@ -17,10 +17,11 @@ test("routes known events by priority and ignores unknown events", () => {
   assert.deepEqual(result.map((item) => item.waveform), ["firework", "knock"]);
 });
 
-test("routes client UI feedback with activation above back and focus", () => {
+test("routes client UI feedback with activation above back, focus and hover", () => {
   const router = new EventRouter();
   const result = router.routeSnapshot(snapshot(1, [
     { id: "focus", type: "ui.focus" },
+    { id: "hover", type: "ui.hover" },
     { id: "back", type: "ui.back" },
     { id: "activate", type: "ui.activate" }
   ]));
@@ -30,7 +31,8 @@ test("routes client UI feedback with activation above back and focus", () => {
     [
       ["ui.activate", "damp_state_change", 15],
       ["ui.back", "subtle_collision", 10],
-      ["ui.focus", "subtle_collision", 5]
+      ["ui.focus", "subtle_collision", 5],
+      ["ui.hover", "subtle_collision", 4]
     ]
   );
 });

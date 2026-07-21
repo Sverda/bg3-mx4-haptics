@@ -60,16 +60,17 @@ Example:
 | `spell.offensive.completed` | harmful spell `CastedSpell` | `ringing` fallback or area pattern |
 | `spell.offensive.failed` | harmful spell `CastSpellFailed` | Silent cancellation event |
 | `turn.started` | `TurnStarted` | `knock` |
+| `ui.hover` | Noesis `PreviewMouseMove` entering an interactive control | `subtle_collision` |
 | `ui.focus` | Noesis `GotKeyboardFocus` | `subtle_collision` |
 | `ui.activate` | Noesis mouse or keyboard/controller activation | `damp_state_change` |
 | `ui.back` | Noesis keyboard/controller cancel | `subtle_collision` |
 
 `action.confirmed` remains understood by the bridge for compatibility with older mod snapshots, but the current mod no longer emits it. Starting an action alone does not produce feedback.
 
-UI events are emitted locally by `BootstrapClient.lua`. Focus, activation and back
-events have separate 70 ms, 50 ms and 100 ms cooldowns so rapid navigation remains
-responsive without flooding the mouse. Mouse activation is limited to interactive
-Noesis controls such as buttons, toggles, sliders, tabs and list items.
+UI events are emitted locally by `BootstrapClient.lua`. Hover, focus, activation and
+back events have separate 60 ms, 70 ms, 50 ms and 100 ms cooldowns so rapid navigation
+remains responsive without flooding the mouse. Mouse hover and activation are limited
+to interactive Noesis controls such as buttons, toggles, sliders, tabs and list items.
 
 The Haptic Web Plugin exposes discrete waveform presets rather than an arbitrary amplitude value. Damage strength is therefore represented with three collision waveforms:
 

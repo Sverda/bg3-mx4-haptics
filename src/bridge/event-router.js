@@ -16,7 +16,8 @@ const DEFAULT_MAPPINGS = Object.freeze({
   "turn.started": { waveform: "knock", priority: 40 },
   "ui.activate": { waveform: "damp_state_change", priority: 15 },
   "ui.back": { waveform: "subtle_collision", priority: 10 },
-  "ui.focus": { waveform: "subtle_collision", priority: 5 }
+  "ui.focus": { waveform: "subtle_collision", priority: 5 },
+  "ui.hover": { waveform: "subtle_collision", priority: 4 }
 });
 
 const OUTCOME_TYPES = new Set([

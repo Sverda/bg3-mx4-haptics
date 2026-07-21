@@ -1,0 +1,5 @@
+{
+  "RequiredVersion": 31,
+  "ModTable": "BG3MX4Haptics",
+  "FeatureFlags": ["Lua"]
+}

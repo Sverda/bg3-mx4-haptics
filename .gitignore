@@ -1,0 +1,8 @@
+node_modules/
+coverage/
+dist/
+db/
+samples/live-events.json
+*.log
+.DS_Store
+Thumbs.db

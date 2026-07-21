@@ -1,0 +1,16 @@
+{
+  "name": "bg3-mx4-haptics",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Baldur's Gate 3 event bridge for the MX Master 4 Haptic Web Plugin",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/bridge/index.js",
+    "demo": "node tools/send-demo-event.js",
+    "haptic:test": "node src/bridge/index.js --waveform subtle_collision",
+    "test": "node --test"
+  }
+}

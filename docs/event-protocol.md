@@ -34,7 +34,7 @@ Example:
 
 | Event | Source | Default waveform |
 | --- | --- | --- |
-| `action.confirmed` | `UsingSpell` | Contextual state change; support uses `completed`, movement uses `wave` |
+| `action.confirmed` | `UsingSpell` | `damp_state_change` |
 | `attack.hit` | `AttackedBy` with a player-controlled attacker | Collision selected by damage |
 | `attack.critical` | `CriticalHitBy` | `firework` |
 | `attack.missed` | `MissedBy` | `mad` |
@@ -55,7 +55,7 @@ Received damage reaches the stronger waveform sooner so that danger remains dist
 
 ## Coalescing combat feedback
 
-`action.confirmed` and its later combat result carry the same `storyActionId`. Attack-like actions are held for up to 2.5 seconds. If a matching hit, critical hit, miss or kill arrives during that window, the action pulse is discarded and only the result is played. If BG3 produces no result, the held action pulse is played as a fallback.
+`action.confirmed` and its later combat result carry the same `storyActionId`. Actions whose structured `spellType` is `projectile` or `zone` are held for up to 2.5 seconds. Spell names are not inspected. If a matching hit, critical hit, miss or kill arrives during that window, the action pulse is discarded and only the result is played. If BG3 produces no result, the held action pulse is played as a fallback.
 
 Events arriving within an 80 ms burst are aggregated and only the highest-priority waveform is sent. This prevents a hit and critical-hit notification from becoming two nearly simultaneous pulses.
 

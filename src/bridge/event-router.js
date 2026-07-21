@@ -17,10 +17,6 @@ const OUTCOME_TYPES = new Set([
   "character.killed"
 ]);
 
-const ATTACK_SPELL_PATTERN = /(attack|weapon|unarmed|throw|shove|projectile|firebolt|eldritchblast|magicmissile)/i;
-const SUPPORT_SPELL_PATTERN = /(heal|cure|restore|reviv|aid|bless|guidance|sanctuary)/i;
-const MOVEMENT_SPELL_PATTERN = /(jump|dash|mistystep|teleport|fly)/i;
-
 export class EventRouter {
   #mappings;
   #seen = new Set();
@@ -51,7 +47,7 @@ export class EventRouter {
       const candidate = {
         ...mapping,
         event,
-        waveform: this.#waveformForEvent(event, mapping.waveform)
+        waveform: this.#waveformForMagnitude(event, mapping.waveform)
       };
 
       const correlationKey = this.#correlationKey(event);
@@ -72,20 +68,7 @@ export class EventRouter {
     return routed.sort((left, right) => right.priority - left.priority);
   }
 
-  #waveformForEvent(event, fallback) {
-    if (event.type === "action.confirmed") {
-      const spell = String(event.spell ?? "");
-      if (SUPPORT_SPELL_PATTERN.test(spell)) {
-        return "completed";
-      }
-
-      if (MOVEMENT_SPELL_PATTERN.test(spell)) {
-        return "wave";
-      }
-
-      return fallback;
-    }
-
+  #waveformForMagnitude(event, fallback) {
     if (event.type !== "damage.received" && event.type !== "attack.hit") {
       return fallback;
     }
@@ -118,9 +101,8 @@ export class EventRouter {
       return false;
     }
 
-    const spell = String(event.spell ?? "");
     const spellType = String(event.spellType ?? "").toLowerCase();
-    return ATTACK_SPELL_PATTERN.test(spell) || spellType === "projectile" || spellType === "zone";
+    return spellType === "projectile" || spellType === "zone";
   }
 
   #remember(id) {

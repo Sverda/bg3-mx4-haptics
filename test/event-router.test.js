@@ -49,30 +49,46 @@ test("selects collision strength from damage magnitude", () => {
   );
 });
 
-test("marks attacks for intent/outcome coalescing by story action", () => {
+test("uses spell type for intent/outcome coalescing without inspecting spell names", () => {
   const router = new EventRouter();
-  const [attack, healing] = router.routeSnapshot(snapshot(1, [
+  const [projectile, attackName, healingName, movementName] = router.routeSnapshot(snapshot(1, [
     {
-      id: "attack",
+      id: "projectile",
       type: "action.confirmed",
-      spell: "Projectile_MainHandAttack",
+      spell: "UnrelatedName",
       spellType: "projectile",
       storyActionId: 42
     },
     {
-      id: "healing",
+      id: "attack-name",
+      type: "action.confirmed",
+      spell: "Projectile_MainHandAttack",
+      spellType: "target",
+      storyActionId: 43
+    },
+    {
+      id: "healing-name",
       type: "action.confirmed",
       spell: "Target_HealingWord",
       spellType: "target",
-      storyActionId: 43
+      storyActionId: 44
+    },
+    {
+      id: "movement-name",
+      type: "action.confirmed",
+      spell: "Target_MistyStep",
+      spellType: "target",
+      storyActionId: 45
     }
   ]));
 
-  assert.equal(attack.phase, "intent");
-  assert.equal(attack.correlationKey, "story-action:42");
-  assert.equal(attack.deferMs, 2500);
-  assert.equal(healing.phase, undefined);
-  assert.equal(healing.waveform, "completed");
+  assert.equal(projectile.phase, "intent");
+  assert.equal(projectile.correlationKey, "story-action:42");
+  assert.equal(projectile.deferMs, 2500);
+  assert.equal(attackName.phase, undefined);
+  assert.equal(attackName.waveform, "damp_state_change");
+  assert.equal(healingName.waveform, "damp_state_change");
+  assert.equal(movementName.waveform, "damp_state_change");
 });
 
 test("marks combat results with the same correlation key", () => {

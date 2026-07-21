@@ -76,12 +76,13 @@ async function main() {
 
   const eventsPath = options.eventsPath ?? process.env.BG3_HAPTICS_EVENT_FILE ?? defaultEventsPath();
   const router = new EventRouter();
-  const dispatcher = new HapticDispatcher(client);
+  const dispatcher = new HapticDispatcher(client, {
+    onSend: (candidate) => {
+      console.log(`Event ${candidate.event.type} -> ${candidate.waveform}`);
+    }
+  });
   const source = new EventFileSource(eventsPath, (snapshot) => {
     const candidates = router.routeSnapshot(snapshot);
-    if (candidates[0]) {
-      console.log(`Event ${candidates[0].event.type} -> ${candidates[0].waveform}`);
-    }
     dispatcher.dispatch(candidates);
   });
 

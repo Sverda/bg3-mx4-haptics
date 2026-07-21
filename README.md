@@ -7,8 +7,10 @@ Prototype haptic feedback for Baldur's Gate 3 using the Logitech MX Master 4 and
 - The bridge connects to the Haptic Web Plugin over its low-latency WebSocket API.
 - A real `subtle_collision` waveform has been sent successfully from this repository.
 - The BG3 Script Extender mod emits combat, roll, spell and turn events.
-- The event bridge deduplicates rolling snapshots, reconnects automatically and rate-limits overlapping feedback.
-- The Lua mod has not yet been installed into the local BG3 installation.
+- The event bridge deduplicates rolling snapshots, reconnects automatically and coalesces overlapping feedback.
+- The complete BG3 -> Script Extender -> Node bridge -> MX Master 4 path has been verified in game.
+- Damage uses three strength tiers, with received damage intentionally feeling stronger sooner.
+- Attack intent and result events are correlated so a normal action -> hit sequence produces one pulse.
 
 ## Requirements
 

@@ -28,15 +28,62 @@ test("does not route the same event twice from the rolling snapshot", () => {
 test("selects collision strength from damage magnitude", () => {
   const router = new EventRouter();
   const result = router.routeSnapshot(snapshot(1, [
-    { id: "low", type: "damage.received", magnitude: 3 },
-    { id: "medium", type: "damage.received", magnitude: 15 },
-    { id: "high", type: "damage.received", magnitude: 40 }
+    { id: "dealt-low", type: "attack.hit", magnitude: 7 },
+    { id: "dealt-medium", type: "attack.hit", magnitude: 15 },
+    { id: "dealt-high", type: "attack.hit", magnitude: 25 },
+    { id: "received-low", type: "damage.received", magnitude: 4 },
+    { id: "received-medium", type: "damage.received", magnitude: 12 },
+    { id: "received-high", type: "damage.received", magnitude: 16 }
   ]));
 
   assert.deepEqual(
     result.map((item) => item.waveform),
-    ["subtle_collision", "damp_collision", "sharp_collision"]
+    [
+      "subtle_collision",
+      "damp_collision",
+      "sharp_collision",
+      "subtle_collision",
+      "damp_collision",
+      "sharp_collision"
+    ]
   );
+});
+
+test("marks attacks for intent/outcome coalescing by story action", () => {
+  const router = new EventRouter();
+  const [attack, healing] = router.routeSnapshot(snapshot(1, [
+    {
+      id: "attack",
+      type: "action.confirmed",
+      spell: "Projectile_MainHandAttack",
+      spellType: "projectile",
+      storyActionId: 42
+    },
+    {
+      id: "healing",
+      type: "action.confirmed",
+      spell: "Target_HealingWord",
+      spellType: "target",
+      storyActionId: 43
+    }
+  ]));
+
+  assert.equal(attack.phase, "intent");
+  assert.equal(attack.correlationKey, "story-action:42");
+  assert.equal(attack.deferMs, 2500);
+  assert.equal(healing.phase, undefined);
+  assert.equal(healing.waveform, "completed");
+});
+
+test("marks combat results with the same correlation key", () => {
+  const router = new EventRouter();
+  const [result] = router.routeSnapshot(snapshot(1, [
+    { id: "hit", type: "attack.hit", magnitude: 8, storyActionId: 42 }
+  ]));
+
+  assert.equal(result.phase, "outcome");
+  assert.equal(result.correlationKey, "story-action:42");
+  assert.equal(result.waveform, "damp_collision");
 });
 
 test("rejects unsupported snapshots", () => {

@@ -1,24 +1,57 @@
 export class HapticDispatcher {
   #client;
   #minimumIntervalMs;
+  #aggregationWindowMs;
+  #onSend;
   #lastSentAt = 0;
   #pending = null;
   #timer = null;
+  #deferredIntents = new Map();
 
-  constructor(client, { minimumIntervalMs = 70 } = {}) {
+  constructor(client, { minimumIntervalMs = 70, aggregationWindowMs = 80, onSend = () => {} } = {}) {
     this.#client = client;
     this.#minimumIntervalMs = minimumIntervalMs;
+    this.#aggregationWindowMs = aggregationWindowMs;
+    this.#onSend = onSend;
   }
 
   dispatch(candidates) {
-    const candidate = candidates[0];
-    if (!candidate) {
-      return;
+    const outcomeKeys = new Set(
+      candidates
+        .filter((candidate) => candidate.phase === "outcome" && candidate.correlationKey)
+        .map((candidate) => candidate.correlationKey)
+    );
+
+    for (const correlationKey of outcomeKeys) {
+      this.#cancelIntent(correlationKey);
     }
 
-    const elapsed = Date.now() - this.#lastSentAt;
-    if (elapsed >= this.#minimumIntervalMs) {
-      this.#send(candidate);
+    for (const candidate of candidates) {
+      if (candidate.phase === "intent" && candidate.correlationKey && candidate.deferMs > 0) {
+        if (outcomeKeys.has(candidate.correlationKey)) {
+          continue;
+        }
+
+        this.#deferIntent(candidate);
+        continue;
+      }
+
+      this.#queue(candidate);
+    }
+  }
+
+  stop() {
+    clearTimeout(this.#timer);
+    this.#timer = null;
+    this.#pending = null;
+    for (const { timer } of this.#deferredIntents.values()) {
+      clearTimeout(timer);
+    }
+    this.#deferredIntents.clear();
+  }
+
+  #queue(candidate) {
+    if (!candidate) {
       return;
     }
 
@@ -27,6 +60,8 @@ export class HapticDispatcher {
     }
 
     if (!this.#timer) {
+      const elapsed = Date.now() - this.#lastSentAt;
+      const cooldownRemaining = Math.max(0, this.#minimumIntervalMs - elapsed);
       this.#timer = setTimeout(() => {
         this.#timer = null;
         const pending = this.#pending;
@@ -34,17 +69,34 @@ export class HapticDispatcher {
         if (pending) {
           this.#send(pending);
         }
-      }, this.#minimumIntervalMs - elapsed);
+      }, Math.max(this.#aggregationWindowMs, cooldownRemaining));
     }
   }
 
-  stop() {
-    clearTimeout(this.#timer);
-    this.#pending = null;
+  #deferIntent(candidate) {
+    this.#cancelIntent(candidate.correlationKey);
+    const timer = setTimeout(() => {
+      this.#deferredIntents.delete(candidate.correlationKey);
+      this.#queue(candidate);
+    }, candidate.deferMs);
+    this.#deferredIntents.set(candidate.correlationKey, { candidate, timer });
+  }
+
+  #cancelIntent(correlationKey) {
+    const deferred = this.#deferredIntents.get(correlationKey);
+    if (!deferred) {
+      return;
+    }
+
+    clearTimeout(deferred.timer);
+    this.#deferredIntents.delete(correlationKey);
   }
 
   #send(candidate) {
-    this.#client.send(candidate.waveform);
+    const sent = this.#client.send(candidate.waveform);
     this.#lastSentAt = Date.now();
+    if (sent !== false) {
+      this.#onSend(candidate);
+    }
   }
 }

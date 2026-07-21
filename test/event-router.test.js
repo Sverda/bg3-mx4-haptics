@@ -102,6 +102,56 @@ test("marks combat results with the same correlation key", () => {
   assert.equal(result.waveform, "damp_collision");
 });
 
+test("routes received critical damage above outgoing combat outcomes", () => {
+  const router = new EventRouter();
+  const result = router.routeSnapshot(snapshot(1, [
+    { id: "critical", type: "attack.critical", storyActionId: 42 },
+    { id: "received-critical", type: "damage.received.critical", storyActionId: 43 }
+  ]));
+
+  assert.deepEqual(result.map((item) => item.waveform), ["sharp_collision", "firework"]);
+});
+
+test("ignores zero damage and does not correlate non-positive story action ids", () => {
+  const router = new EventRouter();
+  const result = router.routeSnapshot(snapshot(1, [
+    { id: "zero", type: "damage.received", magnitude: 0, storyActionId: 1 },
+    { id: "hit", type: "attack.hit", magnitude: 5, storyActionId: 0 }
+  ]));
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0].correlationKey, undefined);
+});
+
+test("distinguishes dialogue rolls and their critical outcomes", () => {
+  const router = new EventRouter();
+  const result = router.routeSnapshot(snapshot(1, [
+    { id: "success", type: "dialog.roll.success", criticality: "None" },
+    { id: "critical-success", type: "dialog.roll.success", criticality: "CriticalSuccess" },
+    { id: "failure", type: "dialog.roll.failure", criticality: "None" },
+    { id: "critical-failure", type: "dialog.roll.failure", criticality: "CriticalFailure" }
+  ]));
+
+  assert.deepEqual(
+    result.map((item) => item.waveform),
+    ["completed", "jingle", "angry_alert", "mad"]
+  );
+});
+
+test("routes offensive spell lifecycle without haptic feedback for its start or failure", () => {
+  const router = new EventRouter();
+  const result = router.routeSnapshot(snapshot(1, [
+    { id: "start", type: "spell.offensive.started", storyActionId: 7, isArea: true },
+    { id: "complete", type: "spell.offensive.completed", storyActionId: 7, isArea: true },
+    { id: "failed", type: "spell.offensive.failed", storyActionId: 8 }
+  ]));
+
+  assert.deepEqual(result.map((item) => item.phase), ["spell-complete", "spell-start", "spell-failed"]);
+  assert.equal(result[0].waveform, "ringing");
+  assert.equal(result[1].silent, true);
+  assert.equal(result[2].silent, true);
+});
+
 test("rejects unsupported snapshots", () => {
   const router = new EventRouter();
   assert.throws(() => router.routeSnapshot({ version: 2, events: [] }), TypeError);

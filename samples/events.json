@@ -1,7 +1,7 @@
 {
   "version": 1,
   "session": "demo-session",
-  "sequence": 3,
+  "sequence": 5,
   "events": [
     {
       "id": "demo-session:1",
@@ -10,14 +10,36 @@
     },
     {
       "id": "demo-session:2",
-      "type": "attack.hit",
-      "magnitude": 12,
+      "type": "spell.offensive.started",
+      "storyActionId": 42,
+      "isArea": true,
+      "areaRadius": 4,
       "timestamp": 1
     },
     {
       "id": "demo-session:3",
-      "type": "attack.critical",
+      "type": "attack.hit",
+      "magnitude": 12,
+      "storyActionId": 42,
+      "direction": "dealt",
+      "target": "demo-target-a",
       "timestamp": 2
+    },
+    {
+      "id": "demo-session:4",
+      "type": "attack.critical",
+      "storyActionId": 42,
+      "direction": "dealt",
+      "target": "demo-target-b",
+      "timestamp": 3
+    },
+    {
+      "id": "demo-session:5",
+      "type": "spell.offensive.completed",
+      "storyActionId": 42,
+      "isArea": true,
+      "areaRadius": 4,
+      "timestamp": 4
     }
   ]
 }

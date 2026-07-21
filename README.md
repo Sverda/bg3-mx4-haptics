@@ -10,7 +10,9 @@ Prototype haptic feedback for Baldur's Gate 3 using the Logitech MX Master 4 and
 - The event bridge deduplicates rolling snapshots, reconnects automatically and coalesces overlapping feedback.
 - The complete BG3 -> Script Extender -> Node bridge -> MX Master 4 path has been verified in game.
 - Damage uses three strength tiers, with received damage intentionally feeling stronger sooner.
-- Attack intent and result events are correlated so a normal action -> hit sequence produces one pulse.
+- Combat results are correlated so hit, critical-hit and kill events from one action produce one result.
+- Offensive spells are identified from BG3 spell flags; healing, movement and cancelled casts stay silent.
+- Area spells use deterministic 4-12 pulse textures with short irregular gaps and an outcome accent.
 
 ## Requirements
 

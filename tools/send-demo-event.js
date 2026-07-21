@@ -23,7 +23,7 @@ snapshot.events.push({
   magnitude,
   timestamp: Date.now()
 });
-snapshot.events = snapshot.events.slice(-16);
+snapshot.events = snapshot.events.slice(-64);
 
 const temporaryPath = `${eventPath}.tmp`;
 await writeFile(temporaryPath, `${JSON.stringify(snapshot, null, 2)}\n`);

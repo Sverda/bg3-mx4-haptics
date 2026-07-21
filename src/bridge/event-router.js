@@ -3,10 +3,16 @@ const DEFAULT_MAPPINGS = Object.freeze({
   "attack.hit": { waveform: "damp_collision", priority: 50 },
   "attack.critical": { waveform: "firework", priority: 100 },
   "attack.missed": { waveform: "mad", priority: 60 },
-  "character.killed": { waveform: "happy_alert", priority: 90 },
+  "character.killed": { waveform: "happy_alert", priority: 110 },
   "damage.received": { waveform: "damp_collision", priority: 80 },
+  "damage.received.critical": { waveform: "sharp_collision", priority: 120 },
+  "dialog.roll.success": { waveform: "completed", priority: 70 },
+  "dialog.roll.failure": { waveform: "angry_alert", priority: 70 },
   "roll.success": { waveform: "completed", priority: 70 },
   "roll.failure": { waveform: "angry_alert", priority: 70 },
+  "spell.offensive.started": { priority: 0, silent: true },
+  "spell.offensive.completed": { waveform: "ringing", priority: 30 },
+  "spell.offensive.failed": { priority: 0, silent: true },
   "turn.started": { waveform: "knock", priority: 40 }
 });
 
@@ -14,8 +20,12 @@ const OUTCOME_TYPES = new Set([
   "attack.hit",
   "attack.critical",
   "attack.missed",
-  "character.killed"
+  "character.killed",
+  "damage.received",
+  "damage.received.critical"
 ]);
+
+const DAMAGE_TYPES = new Set(["attack.hit", "damage.received"]);
 
 export class EventRouter {
   #mappings;
@@ -44,10 +54,14 @@ export class EventRouter {
         continue;
       }
 
+      if (DAMAGE_TYPES.has(event.type) && Number(event.magnitude ?? 0) <= 0) {
+        continue;
+      }
+
       const candidate = {
         ...mapping,
         event,
-        waveform: this.#waveformForMagnitude(event, mapping.waveform)
+        waveform: this.#waveformForEvent(event, mapping.waveform)
       };
 
       const correlationKey = this.#correlationKey(event);
@@ -60,6 +74,12 @@ export class EventRouter {
         candidate.deferMs = 2500;
       } else if (OUTCOME_TYPES.has(event.type)) {
         candidate.phase = "outcome";
+      } else if (event.type === "spell.offensive.started") {
+        candidate.phase = "spell-start";
+      } else if (event.type === "spell.offensive.completed") {
+        candidate.phase = "spell-complete";
+      } else if (event.type === "spell.offensive.failed") {
+        candidate.phase = "spell-failed";
       }
 
       routed.push(candidate);
@@ -68,7 +88,17 @@ export class EventRouter {
     return routed.sort((left, right) => right.priority - left.priority);
   }
 
-  #waveformForMagnitude(event, fallback) {
+  #waveformForEvent(event, fallback) {
+    if (event.type === "dialog.roll.success" || event.type === "dialog.roll.failure") {
+      const criticality = String(event.criticality ?? "")
+        .toLowerCase()
+        .replaceAll(/[^a-z0-9]/g, "");
+
+      if (criticality.includes("critical")) {
+        return event.type === "dialog.roll.success" ? "jingle" : "mad";
+      }
+    }
+
     if (event.type !== "damage.received" && event.type !== "attack.hit") {
       return fallback;
     }
@@ -90,6 +120,11 @@ export class EventRouter {
 
   #correlationKey(event) {
     if (event.storyActionId === undefined || event.storyActionId === null || event.storyActionId === "") {
+      return null;
+    }
+
+    const numericId = Number(event.storyActionId);
+    if (Number.isFinite(numericId) && numericId <= 0) {
       return null;
     }
 

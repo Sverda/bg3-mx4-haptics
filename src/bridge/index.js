@@ -78,7 +78,10 @@ async function main() {
   const router = new EventRouter();
   const dispatcher = new HapticDispatcher(client, {
     onSend: (candidate) => {
-      console.log(`Event ${candidate.event.type} -> ${candidate.waveform}`);
+      const feedback = candidate.pattern
+        ? `${candidate.pattern.name} (${candidate.pattern.pulses.length} pulses)`
+        : candidate.waveform;
+      console.log(`Event ${candidate.event.type} -> ${feedback}`);
     }
   });
   const source = new EventFileSource(eventsPath, (snapshot) => {

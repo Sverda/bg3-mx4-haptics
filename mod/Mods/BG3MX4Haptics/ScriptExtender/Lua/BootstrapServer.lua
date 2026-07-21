@@ -5,6 +5,7 @@ local SessionId = tostring(Ext.Timer.ClockEpoch()) .. "-" .. tostring(Ext.Timer.
 local Sequence = 0
 local RecentEvents = {}
 local RecentEventLimit = 16
+local DebugTraces = false
 
 local function IsPlayerControlled(characterGuid)
   if characterGuid == nil or characterGuid == "" then
@@ -25,6 +26,10 @@ local function WriteSnapshot()
 end
 
 local function TraceOsirisEvent(eventName, fields)
+  if not DebugTraces then
+    return
+  end
+
   local trace = fields or {}
   trace.event = eventName
   trace.host = Osi.GetHostCharacter()
@@ -40,7 +45,9 @@ local function Emit(eventType, fields)
   event.type = eventType
   event.timestamp = Ext.Timer.MonotonicTime()
 
-  Ext.IO.SaveFile(LastEventFile, Ext.Json.Stringify(event))
+  if DebugTraces then
+    Ext.IO.SaveFile(LastEventFile, Ext.Json.Stringify(event))
+  end
 
   table.insert(RecentEvents, event)
   while #RecentEvents > RecentEventLimit do

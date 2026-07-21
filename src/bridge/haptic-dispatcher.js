@@ -8,7 +8,7 @@ export class HapticDispatcher {
   #timer = null;
   #deferredIntents = new Map();
 
-  constructor(client, { minimumIntervalMs = 70, aggregationWindowMs = 80, onSend = () => {} } = {}) {
+  constructor(client, { minimumIntervalMs = 30, aggregationWindowMs = 15, onSend = () => {} } = {}) {
     this.#client = client;
     this.#minimumIntervalMs = minimumIntervalMs;
     this.#aggregationWindowMs = aggregationWindowMs;
